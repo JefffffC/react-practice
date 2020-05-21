@@ -1,8 +1,16 @@
 import React, { Component } from "react";
 import classes from "./App.css";
-import Person from "../components/Persons/Person/Person";
+import Persons from "../components/Persons/Persons";
+import Cockpit from "../components/Cockpit/Cockpit";
+import withClass from "../hoc/withClass";
+import Auxilliary from "../hoc/Auxilliary";
 
 class App extends Component {
+  constructor(props) {
+    super(props);
+    console.log("[App.js] constructor");
+  }
+
   state = {
     persons: [
       { id: "2i3o4u23", name: "Max", age: 28 },
@@ -10,7 +18,31 @@ class App extends Component {
       { id: "32423334", name: "Stephanie", age: 26 },
     ],
     showPersons: false,
+    showCockpit: true,
+    changeCounter: 0,
   };
+
+  static getDerivedStateFromProps(props, state) {
+    console.log("[App.js] getDerivedStateFromProps");
+    return state;
+  }
+
+  // componentWillMount() {
+  //   console.log('[App.js] componentWillMount');
+  // }
+
+  componentDidMount() {
+    console.log("[App.js] componentDidMount");
+  }
+
+  shouldComponentUpdate(nextProps, nextState) {
+    console.log("[App.js] shouldComponentUpdate");
+    return true;
+  }
+
+  componentDidUpdate() {
+    console.log("[App.js] componentDidUpdate");
+  }
 
   nameChangedHandler = (event, id) => {
     const personIndex = this.state.persons.findIndex((p) => {
@@ -26,7 +58,9 @@ class App extends Component {
 
     const persons = [...this.state.persons];
     persons[personIndex] = person;
-    this.setState({ persons: persons });
+    this.setState((prevState, props) => {
+      return { persons: persons, changeCounter: prevState.changeCounter + 1 };
+    });
   };
 
   togglePersonsHandler = () => {
@@ -41,49 +75,42 @@ class App extends Component {
   };
 
   render() {
+    console.log("[App.js] render");
     let persons = null;
-
-    let btnClass = "";
 
     if (this.state.showPersons) {
       persons = (
-        <div>
-          {this.state.persons.map((person, index) => {
-            return (
-              <Person
-                // need keys for React, comparison of old dom to virtual dom for distinct elements, index isnt good
-                name={person.name}
-                age={person.age}
-                key={index}
-                click={() => this.deletePersonHandler(index)}
-                changed={(event) => this.nameChangedHandler(event, person.id)}
-              />
-            );
-          })}
-        </div>
+        <Persons
+          persons={this.state.persons}
+          clicked={this.deletePersonHandler}
+          changed={this.nameChangedHandler}
+        />
       );
-      btnClass = classes.Red;
-    }
-
-    let assignedClasses = [];
-    if (this.state.persons.length <= 2) {
-      assignedClasses.push(classes.red); // classes = ['red']
-    }
-    if (this.state.persons.length <= 1) {
-      assignedClasses.push(classes.bold); // classes = ['red', 'bold']
     }
 
     return (
-      <div className={classes.App}>
-        <h1>Hi, I'm a React App</h1>
-        <p className={assignedClasses.join(" ")}>This is really working!</p>
-        <button className={btnClass} onClick={this.togglePersonsHandler}>
-          Toggle Persons
+      <Auxilliary>
+        <button
+          onClick={() => {
+            this.setState((prevState) => ({
+              showCockpit: !prevState.showCockpit,
+            }));
+          }}
+        >
+          {this.state.showCockpit ? "Remove Cockpit" : "Show Cockpit"}
         </button>
+        {this.state.showCockpit ? (
+          <Cockpit
+            title={this.props.appTitle}
+            showPersons={this.state.showPersons}
+            personslength={this.state.persons.length}
+            clicked={this.togglePersonsHandler}
+          />
+        ) : null}
         {persons}
-      </div>
+      </Auxilliary>
     );
   }
 }
 
-export default App;
+export default withClass(App, classes.App);
